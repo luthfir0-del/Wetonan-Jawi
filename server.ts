@@ -118,7 +118,18 @@ Tujuan akhir: pengguna memperoleh pemahaman yang lebih dalam, sudut pandang yang
         promptText += `\n`;
       }
 
-      promptText += `Pertanyaan Pengguna saat ini:\n"${userQuestion}"\n\nBerikan wejangan dan pencerahan yang bijak, menentramkan batin, dan memberikan panduan nyata.`;
+     
+promptText += `Pertanyaan Pengguna saat ini:
+"${userQuestion}"
+
+INSTRUKSI JAWABAN:
+Jawab pertanyaan pengguna secara langsung, ramah, dan natural menggunakan bahasa Indonesia sehari-hari.
+Gunakan data weton yang tersedia sebagai dasar pembahasan, bukan sebagai alasan untuk membuat asumsi tentang kehidupan pengguna.
+Jelaskan alasan di balik setiap tafsir dan hubungkan dengan contoh atau langkah praktis jika relevan.
+Jika pengguna meminta analisis mendalam, bahas secara terstruktur dengan penjelasan yang cukup mendalam, bukan sekadar rangkuman singkat.
+Hindari bahasa Jawa krama yang berlebihan, kalimat puitis, pengulangan, ramalan yang pasti, dan pembahasan yang tidak diminta.
+Jawab hanya hal yang relevan dengan pertanyaan. Jika informasi tidak tersedia, katakan dengan jujur dan jangan mengarangnya.`;
+
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.8-flash',
