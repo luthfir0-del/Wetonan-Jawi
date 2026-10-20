@@ -4,43 +4,30 @@ import { cors } from 'hono/cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = new Hono();
-
 app.use('*', cors());
 
-// Inisialisasi API Key Gemini
 const apiKey = process.env.GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
 app.post('/api/chat', async (c) => {
   try {
-    const body = await c.req.json();
-    const { message, history, userContext } = body;
+    const { message, userContext } = await c.req.json();
 
     if (!apiKey) {
-      return c.json(
-        { reply: 'Ngapunten, API Key Gemini belum dikonfigurasi pada server.' },
-        500
-      );
+      return c.json({ reply: 'Waduh, API Key Gemini belum terpasang di server nih.' }, 500);
     }
 
-    // Bangun System Prompt berdasarkan context Weton Pengguna dari Kalkulator
-    const wetonInfo = userContext
-      ? `Weton: ${userContext.weton}, Neptu: ${userContext.neptu}${userContext.watak ? `, Watak: ${userContext.watak}` : ''}`
-      : 'Belum ditentukan oleh pengguna.';
-
     const systemInstruction = `
-Anda adalah Minton, Pamong Primbon dari @wetonanjawi (wetonanjawi.id).
-Karakter Anda adalah asisten konsul weton yang bijak, ramah, bernuansa Jawa yang modern-halus, dan solutif.
+Anda adalah Minton, asisten konsul weton dari @wetonanjawi.
+GAYA BAHASA: Santai, ramah, komunikatif, mudah dimengerti, dan modern (Gunakan bahasa Indonesia sehari-hari yang akrab). Hindari bahasa Jawa kromo/halus yang terlalu kaku.
 
-[DATA WETON PENGGUNA TERATUR]:
-${wetonInfo}
+DATA WETON USER:
+${userContext ? `Weton Terdaftar: ${userContext.weton} (Neptu${userContext.neptu})` : 'User belum memasukkan weton.'}
 
-ATURAN UTAMA MINTON:
-1. JANGAN PERNAH menganggap atau menghitung hari ini sebagai weton tanggal lahir pengguna!
-2. Jika pengguna sudah memiliki Weton terdaftar di atas (${userContext ? userContext.weton : 'Belum Ada'}), gunakan data weton tersebut sebagai acuan utama untuk membedah watak, jodoh, hari baik, arah rezeki, dan tafsir mimpi.
-3. Jika Weton Pengguna masih "Belum ditentukan oleh pengguna", dengan ramah ingatkan pengguna untuk memilih/menghitung tanggal lahirnya di kalkulator weton terlebih dahulu atau menyebutkan tanggal lahirnya secara jelas di percakapan.
-4. Gunakan sapaan khas seperti "kisanak" atau "panjenengan".
-5. Berikan jawaban yang menenangkan, tidak fatalis/menakut-nakuti, dan berikan panduan amalan/saran positif berdasarkan kearifan lokal Jawa.
+ATURAN BALASAN:
+1. Jawab pertanyaan pengguna secara LENGKAP, JELAS, dan DETAIL (misal pembahasan rezeki, watak, jodoh, atau saran hari baik).
+2. DILARANG membalas singkat seperti "Matur nuwun" atau kalimat puitis tanpa memberikan penjelasan isi.
+3. Jika pengguna menanyakan weton tertentu di dalam chat (contoh: "weton senin legi gimana rejekinya"), langsung jelaskan detail weton Senin Legi tersebut secara gamblang dan mudah dipahami.
 `;
 
     const model = genAI.getGenerativeModel({
@@ -48,38 +35,15 @@ ATURAN UTAMA MINTON:
       systemInstruction: systemInstruction,
     });
 
-    // Format riwayat percakapan untuk API Gemini
-    const formattedHistory = (history || [])
-      .slice(0, -1) // Kecuali pesan pengguna yang paling baru
-      .map((h: { role: string; text: string }) => ({
-        role: h.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: h.text }],
-      }));
-
-    const chat = model.startChat({
-      history: formattedHistory,
-    });
-
-    const result = await chat.sendMessage(message);
+    const result = await model.generateContent(message);
     const responseText = result.response.text();
 
     return c.json({ reply: responseText });
   } catch (error) {
-    console.error('Error pada API KiAgeng/Minton Chat:', error);
-    return c.json(
-      {
-        reply:
-          'Ngapunten kisanak, server Minton sedang mengalami kendala teknis. Silakan coba kirim ulang pertanyaan panjenengan.',
-      },
-      500
-    );
+    console.error('Server Error:', error);
+    return c.json({ reply: 'Waduh, Minton lagi ada kendala jaringan nih. Coba kirim ulang ya!' }, 500);
   }
 });
 
 const port = Number(process.env.PORT) || 3001;
-console.log(`Server Wetonan Jawi berjalan di port ${port}`);
-
-serve({
-  fetch: app.fetch,
-  port: port,
-});
+serve({ fetch: app.fetch, port });
