@@ -154,13 +154,30 @@ Tujuan akhir: pengguna memperoleh pemahaman yang lebih dalam, sudut pandang yang
 - Pancasuda: ${weton.pancasuda} (${weton.pancasudaDesc})
 - Wuku: ${weton.wuku} (${weton.wukuMakna})
 
-Tolong buatkan:
-1. "analisisMendalam": Ulasan naratif 2-3 paragraf mengenai rahasia kekuatan batin, daya cipta, potensi kepemimpinan, dan tantangan hidup yang harus diwaspadai.
-2. "kunciRezeki": Nasihat khusus cara membuka pintu rezeki dan pintu keberkahan untuk weton ini.
-3. "amalanPenyelaras": Tindakan atau kebiasaan luhur penyeimbang watak (misal: puasa weton, sedekah subuh, atau latihan ketenangan jiwa).
-4. "ajimatFilosofi": 1 kalimat falsafah Jawa luhur yang paling cocok menjadi pegangan hidupnya seumur hidup beserta maknanya.
 
-Format jawaban harus berwibawa, menginspirasi, dan tidak menakut-nakuti.`;
+Buat analisis weton yang mendalam, terstruktur, natural, dan mudah dibaca. Gunakan data weton di atas sebagai konteks, bukan sebagai bukti mutlak tentang kepribadian atau masa depan seseorang.
+
+Keluarkan hasil dalam format JSON valid dengan empat properti berikut:
+
+{
+  "analisisMendalam": "Analisis beberapa paragraf dengan subjudul Markdown yang relevan. Bahas makna dasar weton, potensi kekuatan, kecenderungan yang perlu diwaspadai, pola menghadapi masalah, kebutuhan emosional, dan area pengembangan diri. Jelaskan hubungan antara tafsir tradisi dengan contoh situasi kehidupan sehari-hari. Hindari pengulangan dan jangan membatasi analisis menjadi 2-3 paragraf jika pembahasan memerlukan kedalaman lebih.",
+  "kunciRezeki": "Jelaskan strategi rezeki dan pekerjaan secara spesifik: potensi keterampilan yang dapat dikembangkan, lingkungan kerja yang mungkin sesuai, risiko pengambilan keputusan, pengelolaan uang, serta langkah konkret yang bisa dilakukan. Jangan menjanjikan kekayaan atau mengklaim weton menjamin datangnya rezeki.",
+  "amalanPenyelaras": "Berikan 3-5 langkah praktis untuk menyeimbangkan kebiasaan dan mengembangkan diri. Sertakan tindakan harian atau mingguan yang terukur. Jika menyebut amalan tradisional Jawa, jelaskan sebagai pilihan budaya atau spiritual, bukan syarat wajib atau jaminan hasil.",
+  "ajimatFilosofi": "Berikan satu falsafah Jawa yang relevan, arti dalam bahasa Indonesia, dan penerapannya dalam kehidupan. Jangan mengarang kutipan atau mengklaim sumber kitab yang belum terverifikasi."
+}
+
+ATURAN GAYA DAN AKURASI:
+- Gunakan bahasa Indonesia modern yang hangat, santai, sopan, dan terasa seperti konsultasi personal.
+- Langsung mulai dari inti analisis. Jangan gunakan salam panjang atau sapaan berulang.
+- Jangan mengasumsikan pengguna memiliki weton yang sedang dianalisis, mempunyai pasangan tertentu, atau sedang menghadapi masalah tertentu tanpa informasi yang jelas.
+- Jangan menambahkan perhitungan jodoh, angka kecocokan, arah rezeki, atau tafsir lain yang tidak diminta.
+- Bedakan informasi perhitungan, tafsir tradisi, dan saran praktis.
+- Jika makna Lakuning, Pancasuda, atau Wuku tidak tersedia atau tidak dapat dipastikan, jangan mengarang penjelasannya.
+- Hindari klaim psikologi modern yang tidak memiliki dasar. Gunakan frasa seperti "dalam tafsir tradisi" atau "jika kecenderungan ini terasa sesuai dengan pengalaman Anda".
+- Setiap subbagian harus memberikan penjelasan baru, contoh konkret, atau tindakan yang bisa dilakukan.
+- Jangan menakut-nakuti, menggurui, berlebihan dalam bahasa spiritual, atau mengulang nasihat umum sekadar untuk memperpanjang jawaban.
+- Pastikan JSON valid: gunakan tanda kutip ganda, hindari koma berlebih, dan jangan menambahkan teks di luar objek JSON.
+;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.8-flash',
