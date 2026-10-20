@@ -38,22 +38,28 @@ const isFollowUpQuestion = (question: string): boolean =>
   );
 
 /** Hilangkan penanda Markdown tanpa mengubah isi utama jawaban. */
+const
 const cleanAssistantText = (rawText: string): string => {
   return rawText
-    .replace(/```(?:[a-zA-Z0-9_-]+)?\s*\n?([\s\S]*?)```/g, '$1')
+    .replace(/```[\s\S]*?```/g, (block) =>
+      block.replace(/^```[^\n]*\n?/, '').replace(/```$/, '')
+    )
     .replace(/^\s{0,3}#{1,6}\s*/gm, '')
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/__(.*?)__/g, '$1')
     .replace(/(?<!\*)\*(?!\s)(.*?)(?<!\s)\*(?!\*)/g, '$1')
     .replace(/(?<!_)_(?!\s)(.*?)(?<!\s)_(?!_)/g, '$1')
+    .replace(/~~(.*?)~~/g, '$1')
     .replace(/`([^`]+)`/g, '$1')
-    .replace(/^\s*(?:---+|\*\*\*+|___+)\s*$/gm, '')
-    .replace(/^\s*[*+]\s+/gm, '')
-    .replace(/^\s*-\s+/gm, '')
+    .replace(/^\s*(?:[-*_]\s*){3,}$/gm, '')
+    .replace(/^\s*[-+*]\s+/gm, '')
+    .replace(/^\s*\d+[.)]\s+/gm, '')
     .replace(/^\s*>\s?/gm, '')
     .replace(/[ \t]+$/gm, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+};
+();
 };
 
 const renderMessageText = (text: string) => cleanAssistantText(text);
