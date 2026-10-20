@@ -1,0 +1,6 @@
+{
+  "name": "WetonanJawi.ai.id - Primbon & Weton Jawa AI",
+  "description": "Portal kalkulator weton Jawa akurat, petungan jodoh, ramalan watak & rezeki, hari baik hajatan, dan konsultasi spiritual cerdas bersama Ki Ageng AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cinzel", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-jawa: "Noto Sans Javanese", sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+/* Tema Biru Dongker (Deep Navy Blue) khas Keraton & Branding Threads/YouTube @wetonanjawi */
+body {
+  font-family: var(--font-sans);
+  background-color: #070c18;
+  color: #f1f5f9;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(30, 64, 175, 0.22) 0%, transparent 60%),
+    radial-gradient(circle at 90% 30%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 10% 70%, rgba(37, 99, 235, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.8) 0%, transparent 100%);
+  background-attachment: fixed;
+}
+
+/* Custom golden & navy scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #070c18;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e3a8a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+/* Aksara Jawa styling */
+.aksara-jawa {
+  font-family: var(--font-jawa), serif;
+  letter-spacing: 0.05em;
+}
+
+/* Shimmer gold animation */
+@keyframes goldShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fef08a 0%, #d4af37 40%, #f59e0b 80%, #fef08a 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.navy-gradient-bg {
+  background: linear-gradient(145deg, #0d1b3e 0%, #081126 100%);
+}
+
+.navy-card-border {
+  border-color: rgba(59, 130, 246, 0.25);
+}
