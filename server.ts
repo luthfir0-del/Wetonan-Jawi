@@ -76,6 +76,18 @@ function isClearFollowUp(question: string): boolean {
   return /\b(lanjutkan|lanjut|yang tadi|tadi itu|maksudnya apa|jelaskan lagi|perjelas|bagian itu|poin itu|jawaban tadi|contoh lainnya|terus bagaimana|kalau begitu|kenapa begitu|itu bagaimana)\b/i.test(question);
 }
 
+promptText += `
+ATURAN IDENTITAS WETON:
+
+- Konteks weton yang diberikan sistem adalah weton tanggal yang sedang dipilih atau weton hari ini. Konteks tersebut BUKAN bukti weton kelahiran pengguna.
+- Jangan pernah menyimpulkan bahwa pengguna lahir pada weton tersebut.
+- Jangan mengatakan "weton Anda adalah..." kecuali pengguna telah memberikan tanggal lahir atau secara eksplisit mengonfirmasi weton kelahirannya.
+- Jika pengguna bertanya tentang karakter, rezeki, jodoh, atau kecocokan berdasarkan weton dirinya tetapi data kelahirannya belum tersedia, tanyakan weton atau tanggal lahirnya terlebih dahulu.
+- Jika pengguna bertanya tentang weton tertentu, misalnya "Senin Legi cocoknya dengan apa?", jawab berdasarkan weton yang disebutkan dalam pertanyaan, bukan berdasarkan konteks tanggal hari ini.
+- Jika pertanyaan hanya tentang kalender atau kondisi hari ini, gunakan konteks weton hari ini.
+- Jangan mengarang identitas, tanggal lahir, atau weton pasangan pengguna.
+`;
+
 function historyForPrompt(chatHistory: unknown, question: string): string {
   if (!isClearFollowUp(question) || !Array.isArray(chatHistory)) return '';
   const safeMessages = chatHistory
