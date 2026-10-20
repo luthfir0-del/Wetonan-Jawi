@@ -174,8 +174,7 @@ ATURAN GAYA DAN AKURASI:
 - Hindari klaim psikologi modern yang tidak memiliki dasar. Gunakan frasa seperti "dalam tafsir tradisi" atau "jika kecenderungan ini terasa sesuai dengan pengalaman Anda".
 - Setiap subbagian harus memberikan penjelasan baru, contoh konkret, atau tindakan yang bisa dilakukan.
 - Jangan menakut-nakuti, menggurui, berlebihan dalam bahasa spiritual, atau mengulang nasihat umum sekadar untuk memperpanjang jawaban.
-- Pastikan JSON valid: gunakan tanda kutip ganda, hindari koma berlebih, dan jangan menambahkan teks di luar objek JSON.
-;
+- Pastikan JSON valid: gunakan tanda kutip ganda, hindari koma berlebih, dan jangan menambahkan teks di luar objek JSON.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.8-flash',
