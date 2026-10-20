@@ -1,3 +1,67 @@
+import express, { Request, Response } from 'express';
+import { createServer as createViteServer } from 'vite';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+import { GoogleGenAI } from '@google/genai';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const SYSTEM_INSTRUCTION = `
+IDENTITAS
+Anda adalah Minton, asisten konsultasi Wetonan Jawi. Anda membantu menjelaskan tradisi weton dan Primbon Jawa, neptu, lakuning, Pancasuda, wuku, karakter, rezeki, pekerjaan, hubungan, mimpi, dan pengembangan diri.
+
+TUJUAN
+Berikan jawaban yang relevan, mendalam sesuai kebutuhan, jelas, natural, dan berguna. Jangan sekadar membuat ramalan atau deskripsi karakter generik.
+
+KONTEKS DAN PERGANTIAN TOPIK
+Pertanyaan terbaru pengguna selalu menjadi prioritas utama. Bedakan weton pengguna, weton hari ini, weton yang sedang ditanyakan, dan weton orang lain. Jangan menganggap semuanya sama.
+Jika pengguna menyebut weton secara eksplisit, fokus pada weton itu. Jangan membawa weton hari ini atau weton dari pembahasan sebelumnya kecuali memang diminta.
+Data weton dari aplikasi bukan otomatis weton lahir pengguna. Gunakan data itu hanya jika pertanyaan jelas membutuhkan data tersebut, misalnya pengguna berkata “weton saya”, “wetonku”, atau secara eksplisit meminta analisis berdasarkan data yang tercantum.
+Riwayat chat hanya digunakan saat pertanyaan terbaru jelas merupakan lanjutan, misalnya “lanjutkan”, “yang tadi”, “itu maksudnya apa”, atau rujukan sejenis. Jika pengguna mengajukan pertanyaan baru yang berdiri sendiri, abaikan topik lama. Jawaban AI sebelumnya bukan bukti dan tidak boleh mengunci asumsi yang keliru.
+
+AKURASI
+Jangan mengarang neptu, makna weton, wuku, lakuning, Pancasuda, kategori petungan, sumber kitab, atau hasil perhitungan. Bedakan weton dan wuku. Jangan mencampur metode Primbon yang berbeda. Jika dasar metode tidak tersedia atau terdapat variasi menurut tradisi, jelaskan keterbatasannya. Jangan mengubah hasil hitungan yang disediakan sistem.
+
+KEDALAMAN
+Pertanyaan sederhana dijawab langsung. Pertanyaan mendalam dijelaskan dengan alasan, pola yang mungkin terjadi, contoh konkret, tantangan, dan langkah praktis. Setiap paragraf harus menambah informasi baru. Hindari nasihat umum berulang tanpa penerapan.
+Untuk karakter, jelaskan potensi dan tantangan sebagai tafsir budaya/refleksi, bukan kepastian tentang seseorang.
+Untuk rezeki dan pekerjaan, bahas keterampilan, kebiasaan kerja, keputusan, pengelolaan uang, relasi profesional, dan langkah nyata. Jangan menjanjikan uang atau keberhasilan melalui ritual, arah, atau weton.
+Untuk hubungan, bahas komunikasi, kebutuhan, konflik yang mungkin muncul, dan cara membangun hubungan sehat. Kecocokan weton bukan jaminan hubungan berhasil atau gagal.
+Untuk mimpi, jelaskan simbolisme sebagai tafsir budaya yang tidak pasti dan jangan menakut-nakuti.
+Untuk hari baik, gunakan hanya tanggal dan kandidat yang disediakan. Jangan mengarang jam, arah, kategori, atau petungan.
+
+GAYA
+Gunakan bahasa Indonesia sehari-hari yang natural, jelas, ramah, dan tidak kaku. Mulai langsung dari inti jawaban. Jangan membuka dengan salam panjang. Hindari bahasa Jawa krama berlebihan, sapaan berulang seperti “Kisanak”, “Panjenengan”, atau “Sedulur”, emoji berlebihan, metafora bertumpuk, gaya sok mistis, pengulangan, dan subjudul terlalu banyak. Jangan mengakhiri setiap jawaban dengan pertanyaan yang tidak diperlukan. Jangan membahas hal yang tidak diminta.
+
+KEJUJURAN
+Primbon adalah tradisi budaya untuk refleksi, bukan kepastian ilmiah atau jaminan masa depan. Jangan memastikan kekayaan, jodoh, penyakit, umur, kecelakaan, kematian, atau kejadian masa depan. Jika informasi tidak cukup, katakan dengan jelas dan jangan menebak.
+`;
+
+function cleanText(value: unknown, maxLength = 4000): string {
+  return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+}
+
+function isClearFollowUp(question: string): boolean {
+  return /\b(lanjutkan|lanjut|yang tadi|tadi itu|maksudnya apa|jelaskan lagi|perjelas|bagian itu|poin itu|jawaban tadi|contoh lainnya|terus bagaimana|kalau begitu|kenapa begitu|itu bagaimana)\b/i.test(question);
+}
+
+function historyForPrompt(chatHistory: unknown, question: string): string {
+  if (!isClearFollowUp(question) || !Array.isArray(chatHistory)) return '';
+  const safeMessages = chatHistory
+    .filter((item: any) => item && typeof item.text === 'string' && (item.sender === 'user' || item.sender === 'kiageng' || item.sender === 'assistant'))
+    .slice(-6)
+    .map((item: any) => `${item.sender === 'user' ? 'Pengguna' : 'Minton'}: ${cleanText(item.text, 1200)}`);
+  return safeMessages.length ? `\nKONTEKS LANJUTAN YANG RELEVAN:\n${safeMessages.join('\n')}\n` : '';
+}
+
+async function startServer() {
+  const app = express();
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  app.use(express.json({ limit: '1mb' }));
 
   const apiKey = process.env.GEMINI_API_KEY || '';
   const ai = apiKey ? new GoogleGenAI({
@@ -30,89 +94,3 @@
       });
       const reply = response.text?.trim();
       if (!reply) return res.status(502).json({ error: 'AI tidak mengembalikan jawaban. Silakan coba lagi.' });
-      return res.json({ reply });
-    } catch (error: any) {
-      console.error('Error in /api/gemini/consult:', error);
-      return res.status(500).json({ error: 'Gagal memproses konsultasi Minton.', details: error?.message || String(error) });
-    }
-  });
-
-  // 2. Bedah weton mendalam
-  app.post('/api/gemini/deep-analysis', async (req: Request, res: Response) => {
-    try {
-      const weton = req.body?.weton;
-      if (!weton || !weton.dina || !weton.pasaran) return res.status(400).json({ error: 'Data weton tidak valid.' });
-      if (!ai) return res.status(503).json({ error: 'Layanan AI belum aktif. Periksa GEMINI_API_KEY pada konfigurasi server.' });
-      const promptText = `Lakukan analisis mendalam untuk data weton berikut.\n\nHari dan pasaran: ${cleanText(weton.dina, 50)} ${cleanText(weton.pasaran, 50)}\nNeptu total: ${cleanText(String(weton.neptuTotal ?? ''), 30)}\nNeptu hari: ${cleanText(String(weton.neptuDina ?? ''), 30)}\nNeptu pasaran: ${cleanText(String(weton.neptuPasaran ?? ''), 30)}\nLakuning: ${cleanText(weton.lakuning, 100)} — ${cleanText(weton.lakuningDesc, 500)}\nPancasuda: ${cleanText(weton.pancasuda, 100)} — ${cleanText(weton.pancasudaDesc, 500)}\nWuku: ${cleanText(weton.wuku, 100)} — ${cleanText(weton.wukuMakna, 500)}\n\nSusun dengan bagian: 1) Gambaran dasar weton dan arti unsur yang tersedia; 2) potensi kekuatan dan cara mengembangkannya; 3) tantangan atau titik buta yang mungkin perlu diperhatikan; 4) rezeki dan pekerjaan dengan strategi yang realistis; 5) kebiasaan praktis untuk pengembangan diri; 6) satu filosofi Jawa yang relevan beserta arti dan penerapannya.\n\nJangan mengarang makna unsur yang tidak tersedia. Beri kedalaman pada tiap bagian tanpa mengulang nasihat. Gunakan bahasa Indonesia natural. Jangan mengasumsikan kondisi hidup, pasangan, atau pekerjaan orang ini. Jangan menjanjikan hasil gaib.`;
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: promptText,
-        config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.4 },
-      });
-      const text = response.text?.trim();
-      if (!text) return res.status(502).json({ error: 'AI tidak mengembalikan analisis.' });
-      return res.json({ text });
-    } catch (error: any) {
-      console.error('Error in /api/gemini/deep-analysis:', error);
-      return res.status(500).json({ error: 'Gagal menghasilkan bedah weton AI.', details: error?.message || String(error) });
-    }
-  });
-
-  // 3. Insight petungan jodoh
-  app.post('/api/gemini/jodoh-insight', async (req: Request, res: Response) => {
-    try {
-      const jodohData = req.body?.jodohData;
-      if (!jodohData?.pria || !jodohData?.wanita) return res.status(400).json({ error: 'Data jodoh tidak valid.' });
-      if (!ai) return res.status(503).json({ error: 'Layanan AI belum aktif. Periksa GEMINI_API_KEY pada konfigurasi server.' });
-      const promptText = `Analisis hasil petungan hubungan berdasarkan hasil sistem berikut. Jangan menghitung ulang atau mengubah hasilnya.\n\nPihak pertama: ${cleanText(jodohData.pria.dina, 50)} ${cleanText(jodohData.pria.pasaran, 50)} (neptu ${cleanText(String(jodohData.neptuPria ?? ''), 30)})\nPihak kedua: ${cleanText(jodohData.wanita.dina, 50)} ${cleanText(jodohData.wanita.pasaran, 50)} (neptu ${cleanText(String(jodohData.neptuWanita ?? ''), 30)})\nTotal neptu: ${cleanText(String(jodohData.neptuTotal ?? ''), 30)}\nKategori petungan dari sistem: ${cleanText(jodohData.kategori, 100)} (${cleanText(jodohData.artosJawa, 300)})\nSkor sistem: ${cleanText(String(jodohData.skorKecocokan ?? ''), 30)}%\n\nJelaskan makna kategori sebagai tafsir tradisi, dinamika yang mungkin muncul, risiko komunikasi yang perlu diperhatikan, dan langkah praktis membangun hubungan sehat. Jangan menyebut kategori sebagai kepastian nasib, jangan menakut-nakuti, jangan menjanjikan hubungan berhasil/gagal, dan jangan menyarankan ritual sebagai syarat. Gunakan 3–5 paragraf natural dan spesifik.`;
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: promptText,
-        config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.4 },
-      });
-      return res.json({ nasihat: response.text?.trim() || 'AI tidak mengembalikan analisis hubungan. Silakan coba lagi.' });
-    } catch (error: any) {
-      console.error('Error in /api/gemini/jodoh-insight:', error);
-      return res.status(500).json({ error: 'Gagal menganalisis jodoh AI.', details: error?.message || String(error) });
-    }
-  });
-
-  // 4. Saran hari baik berdasarkan kandidat yang dihitung aplikasi
-  app.post('/api/gemini/saran-hari-baik', async (req: Request, res: Response) => {
-    try {
-      const { wetonPemohon, targetHajatan, bulanTahun, topDays } = req.body ?? {};
-      if (!wetonPemohon || !targetHajatan) return res.status(400).json({ error: 'Data hajatan tidak lengkap.' });
-      if (!ai) return res.status(503).json({ error: 'Layanan AI belum aktif. Periksa GEMINI_API_KEY pada konfigurasi server.' });
-      const safeTopDays = Array.isArray(topDays) ? topDays.slice(0, 6) : [];
-      const promptText = `Bantu menjelaskan kandidat hari baik dari algoritma aplikasi. Jangan menciptakan kandidat baru dan jangan mengarang jam, arah mata angin, kategori, atau makna petungan yang tidak tercantum.\n\nWeton pemohon: ${cleanText(wetonPemohon.dina, 50)} ${cleanText(wetonPemohon.pasaran, 50)} (neptu ${cleanText(String(wetonPemohon.neptuTotal ?? ''), 30)}, lakuning ${cleanText(wetonPemohon.lakuning, 100)})\nKeperluan: ${cleanText(targetHajatan, 200)}\nBulan/periode: ${cleanText(bulanTahun, 50)}\nKandidat yang dihitung aplikasi:\n${JSON.stringify(safeTopDays, null, 2)}\n\nPilih maksimal dua kandidat dari daftar jika ada dasar yang memadai. Sebut tanggal dan weton sesuai data. Jelaskan alasan hanya berdasarkan informasi yang tersedia. Jika kandidat kosong, katakan bahwa data kandidat belum tersedia. Tambahkan langkah persiapan praktis sesuai acara. Tegaskan secara singkat bahwa petungan hari baik merupakan tradisi budaya, bukan jaminan keberhasilan. Gunakan bahasa Indonesia natural dan jangan membuat klaim tentang jam paling mustajab atau ritual wajib.`;
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: promptText,
-        config: { systemInstruction: SYSTEM_INSTRUCTION, temperature: 0.3 },
-      });
-      return res.json({ rekomendasi: response.text?.trim() || 'AI tidak mengembalikan rekomendasi. Silakan coba lagi.' });
-    } catch (error: any) {
-      console.error('Error in /api/gemini/saran-hari-baik:', error);
-      return res.status(500).json({ error: 'Gagal menghasilkan saran hari baik AI.', details: error?.message || String(error) });
-    }
-  });
-
-  // Serve static files or Vite dev server
-  const isProduction = process.env.NODE_ENV === 'production';
-  if (!isProduction) {
-    const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
-    app.use(vite.middlewares);
-  } else {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (_req, res) => res.sendFile(path.resolve(__dirname, 'dist', 'index.html')));
-  }
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`WetonanJawi.ai.id server running on http://0.0.0.0:${PORT}`);
-  });
-}
-
-startServer().catch((err) => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
