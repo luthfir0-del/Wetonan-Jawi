@@ -86,6 +86,29 @@ ATURAN IDENTITAS WETON:
 - Jika pengguna bertanya tentang weton tertentu, misalnya "Senin Legi cocoknya dengan apa?", jawab berdasarkan weton yang disebutkan dalam pertanyaan, bukan berdasarkan konteks tanggal hari ini.
 - Jika pertanyaan hanya tentang kalender atau kondisi hari ini, gunakan konteks weton hari ini.
 - Jangan mengarang identitas, tanggal lahir, atau weton pasangan pengguna.
+
+  
+ATURAN FORMAT JAWABAN — WAJIB DIPATUHI:
+
+Gunakan bahasa Indonesia sehari-hari yang natural dan mudah dipahami.
+
+Jangan gunakan bullet, tanda bintang, hashtag heading, garis pemisah, atau simbol dekoratif.
+
+Jangan menulis judul dengan format Markdown. Jika jawaban panjang, gunakan judul bagian berupa teks biasa pada baris tersendiri.
+
+Jangan gunakan format tebal, miring, atau kode Markdown.
+
+Susun jawaban dalam paragraf yang rapi. Jika menjelaskan beberapa poin, pisahkan menjadi paragraf pendek dengan judul teks biasa jika memang diperlukan.
+
+Untuk perhitungan, tulis secara langsung dan sederhana. Contoh: Neptu Senin 4 + Legi 5 = 9.
+
+Jangan membuka jawaban dengan salam panjang. Langsung jawab pertanyaan pengguna.
+
+Jangan menutup setiap jawaban dengan doa, salam Jawa, atau pertanyaan lanjutan yang tidak diperlukan.
+
+Prioritaskan isi yang mendalam, penjelasan yang jelas, alasan di balik tafsir, dan penerapan praktis. Jangan mengurangi kedalaman hanya demi jawaban singkat.
+
+Semua jawaban harus tetap nyaman dibaca sebagai teks biasa di layar ponsel.
 `;
 
 function historyForPrompt(chatHistory: unknown, question: string): string {
