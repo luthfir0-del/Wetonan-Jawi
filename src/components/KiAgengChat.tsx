@@ -36,7 +36,7 @@ const getTime = () =>
 const makeWelcomeMessage = (): Message => ({
   id: 'welcome',
   sender: 'kiageng',
-  text: 'Halo! Saya Minton, asisten Wetonan Jawi. Saya bisa membantu membahas weton, tradisi Primbon Jawa, hubungan, pekerjaan, rezeki, dan pengembangan diri. Silakan tulis pertanyaan yang ingin kamu bahas.',
+  text: 'Tulis pertanyaan yang ingin kamu bahas. Saya akan menjawab langsung ke inti, menggunakan bahasa Indonesia sehari-hari, dan membedakan perhitungan, tafsir tradisi, serta refleksi praktis.',
   timestamp: 'Awal sesi',
 });
 
@@ -46,17 +46,31 @@ const isFollowUpQuestion = (question: string): boolean =>
     question.trim(),
   );
 
-const renderMessageText = (text: string) => {
-  // Dukungan Markdown sederhana untuk **teks tebal** dan baris baru.
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
-    }
-    return <React.Fragment key={index}>{part}</React.Fragment>;
-  });
+/**
+ * Merapikan format Markdown yang sering muncul dari model.
+ * Tampilan chat mengikuti gaya Gem Wetonanjawi: teks sederhana,
+ * tanpa heading Markdown, bold marker, garis dekoratif, atau bullet bintang.
+ */
+const cleanAssistantText = (rawText: string): string => {
+  return rawText
+    .replace(/```[\s\S]*?```/g, (block) => block.replace(/^```[^\n]*\n?/, '').replace(/```$/, ''))
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/(?<!\*)\*(?!\s)(.*?)(?<!\s)\*(?!\*)/g, '$1')
+    .replace(/(?<!_)_(?!\s)(.*?)(?<!\s)_(?!_)/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\s*(?:---+|\*\*\*+|___+)\s*$/gm, '')
+    .replace(/^\s*[*+]\s+/gm, '')
+    .replace(/^\s*-\s+/gm, '')
+    .replace(/^\s*\d+[.)]\s+/gm, '')
+    .replace(/^\s*>\s?/gm, '')
+    .replace(/[ \t]+$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 };
+
+const renderMessageText = (text: string) => cleanAssistantText(text);
 
 export const KiAgengChat: React.FC<KiAgengChatProps> = ({
   currentWeton,
@@ -80,17 +94,3 @@ export const KiAgengChat: React.FC<KiAgengChatProps> = ({
     async (textToSend?: string) => {
       const question = (textToSend ?? inputVal).trim();
       if (!question || isLoading) return;
-
-      const previousMessages = messages;
-      const userMsg: Message = {
-        id: `${Date.now()}-user`,
-        sender: 'user',
-        text: question,
-        timestamp: getTime(),
-      };
-
-      setMessages((prev) => [...prev, userMsg]);
-      setInputVal('');
-      setIsLoading(true);
-
-      // Weton yang dikirim adalah konteks kalender/layar saat ini, bukan bukti
