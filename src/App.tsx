@@ -242,13 +242,13 @@ export default function App() {
                   <span>YouTube @wetonanjawi</span>
                 </a>
                 <a
-                  href="https://threads.net/@wetonanjawi"
+                  href="https://threads.net/@wetonanjawi.id"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-200 border border-blue-500/30 text-xs font-semibold transition-colors"
                 >
                   <AtSign className="w-4 h-4 text-amber-300" />
-                  <span>Threads @wetonanjawi</span>
+                  <span>Threads @wetonanjawi.id</span>
                 </a>
               </div>
 
@@ -339,7 +339,7 @@ export default function App() {
                     }}
                     className="hover:text-amber-300 transition-colors cursor-pointer"
                   >
-                    Tanya Minton (@wetonanjawi)
+                    Tanya Minton (@wetonanjawi.id)
                   </button>
                 </li>
                 <li>
